@@ -1,0 +1,486 @@
+openapi: 3.0.2
+info:
+  title: Learning Pathways
+  description: .
+  version: 0.0.1
+
+paths:
+  /learner/subscribe:
+    post:
+      summary: Subscribe a learner to a course.
+      tags:
+        - learner
+      operationId: subscribe
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                course_id:
+                  type: integer
+                  format: int64
+                  required: true
+                  description: The course's id that the learner is subscribing to.
+                  example: 1
+      responses:
+        200:
+          description: The learner is correctly subcribed to the given course.
+        400:
+          description: The subcription is not valid.
+        404:
+          description: Either the learner or the course is not found.
+
+  /learner/course/names/all:
+    get:
+      summary: Gets the names of all the available courses.
+      tags:
+        - learner
+      operationId: getAllCoursesNames
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: The names of all the available courses.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/course_title_id'
+
+  /learner/course/names/subscribed:
+    get:
+      summary: Gets the names of the courses that the learner is subscribed to.
+      tags:
+        - learner
+      operationId: getCoursesNames
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: The names of the courses that the learner is subscribed to.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/course_title_id'
+
+  /learner/course/{id}:
+    get:
+      summary: Gets a specific course that the learner is subscribed to.
+      operationId: getCourse
+      tags:
+        - learner
+      security:
+        - bearerAuth: []
+
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The id of the course to get.
+
+      responses:
+        200:
+          description: Gets a course by id. The learner must be previously subscribed to the course.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/course'
+
+  /learner/test/{id}:
+    get:
+      summary: Gets a tests with the given id.
+      tags:
+        - learner
+      operationId: takeTest
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The id of the test to get.
+      responses:
+        200:
+          description: Success to take a test.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test'
+        404:
+          description: No test found with the given id.
+
+  /learner/review_recommandation:
+    get:
+      summary: Gets the tests that are recommended to review them.
+      tags:
+        - review
+      operationId: getReviewRecommendations
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: The test that are recommended to take again.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  description: The test's id.
+                  example: 1
+
+  /learner/test:
+    get:
+      summary: Gets the tests available for the subscribed courses.
+      tags:
+        - learner
+      operationId: getTestsForCourse
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Success to take a test.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/test_key'
+
+  /learner/test/submit:
+    post:
+      summary: Submits a Test and awaits its results.
+      tags:
+        - learner
+      operationId: submitTest
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/test'
+      responses:
+        200:
+          description: Success to submit the test and obtaining the results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test_result'
+        400:
+          description: Invalid test.
+        404:
+          description: No test found with the given id.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      in: header
+      name: Authorization
+
+  schemas:
+    course_title_id:
+      type: object
+      properties:
+        course_id:
+          type: integer
+          format: int64
+          description: The course's id.
+          example: 1
+
+        course_title:
+          type: string
+          description: The title of the course.
+          example: Spring Boot.
+
+    course:
+      type: object
+      required:
+        - title
+        - nodes
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The course's id.
+          example: 1
+        title:
+          type: string
+          description: The title of the course.
+          required: true
+          minLength: 1
+          example: Backend Developer
+        nodes:
+          type: array
+          description: |
+            A collection of nodes that the course contains. 
+            The nodes will be linked with the same order as this list.
+          required: true
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/course_node'
+
+    course_node:
+      type: object
+      required:
+        - title
+        - description
+        - resources
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: |
+            The node's id.
+          example: 1
+        title:
+          type: string
+          description: |
+            The title of the node.
+          required: true
+          minLength: 1
+          example: Spring Framework
+        description:
+          type: string
+          description: |
+            The description.
+          required: true
+          minLength: 1
+          example: The Spring Framework provides a comprehensive programming...
+        resources:
+          type: array
+          description: |
+            The resources.
+          required: true
+          items:
+            $ref: '#/components/schemas/resource'
+
+    resource:
+      type: object
+      description: resource.
+      required:
+        - title
+        - description
+        - contents
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: |
+            The id of the node.
+          example: 1
+        title:
+          type: string
+          description: |
+            The title of the node.
+          required: true
+          minLength: 1
+          example: The Basics of REST with Spring.
+        description:
+          type: string
+          description: |
+            The description.
+          required: true
+          minLength: 1
+          example: REST embraces the precepts of the web, including its architecture...
+        contents:
+          type: array
+          required: true
+          items:
+            $ref: '#/components/schemas/content'
+
+    content:
+      description: content.
+      type: object
+      required:
+        - title
+        - contentType
+        - url
+      properties:
+        id:
+          description: |
+            The id of the content.
+          type: integer
+          format: int64
+          example: 1
+        title:
+          description: |
+            A title for the content.
+          type: string
+          required: true
+          minLength: 1
+          example: Spring Official Website
+        contentType:
+          description: |
+            The type of content.
+          type: string
+          required: true
+          enum: [ VIDEO, COURSE, BOOK, WIKI, WEBSITE, TUTORIAL, OFFICIAL_WEBSITE, WATCH, READ ]
+          example: OFFICIAL_WEBSITE
+        url:
+          description: |
+            The url which contains the content.
+          type: string
+          required: true
+          minLength: 1
+          example: https://spring.io/
+
+    test_key:
+      description: Identifies the test.
+      type: object
+      properties:
+        test_id:
+          description: |
+            The id of the test.
+          type: integer
+          format: int64
+          example: 1
+        course_id:
+          description: |
+            Identifies the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+        course_node_id:
+          description: |
+            Identifies the node of the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+
+    test:
+      description: a Test.
+      type: object
+      required:
+        - questions
+        - course_node_id
+      properties:
+        id:
+          description: |
+            The id of the test.
+          type: integer
+          format: int64
+          example: 1
+        course_id:
+          description: |
+            Identifies the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+        course_node_id:
+          description: |
+            Identifies the node of the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+        questions:
+          description: |
+            The questions.
+          type: array
+          required: true
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/question'
+
+    question:
+      description: The question
+      type: object
+      required:
+        - question
+        - answer
+        - options
+      properties:
+        id:
+          description: |
+            The id of the question.
+          type: integer
+          format: int64
+          example: 1
+        question:
+          description: |
+            The question
+          type: string
+          required: true
+          minLength: 1
+          example: What is a REST API?
+        answer:
+          description: |
+            The index of the correct answer between the options.
+          type: integer
+          format: int32
+          required: true
+          example: 0
+        options:
+          description: |
+            The options that are shown as possible answers.
+          type: array
+          required: true
+          minItems: 2
+          items:
+            type: string
+            minLength: 1
+            example: 'A REST API is a...'
+
+    test_result:
+      type: object
+      properties:
+        test_id:
+          type: integer
+          format: int64
+          description: The test's id.
+          example: 1
+        total_questions:
+          type: integer
+          format: int32
+          description: The total amount of question in the test.
+          example: 10
+        score:
+          type: integer
+          format: int32
+          description: The score of the test. Is always a value between 0 and 100.
+          example: 86
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/answer'
+
+    answer:
+      type: object
+      properties:
+        question:
+          description: The question.
+          type: string
+          minLength: 1
+          example: 'What is a REST API?'
+
+        given_answer:
+          description: The answer given.
+          type: string
+          minLength: 1
+          example: 'wrong answer.'
+
+        correct_answer:
+          description: The correct answer.
+          type: string
+          minLength: 1
+          example: 'correct answer.'

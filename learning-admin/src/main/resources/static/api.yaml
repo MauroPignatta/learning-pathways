@@ -1,0 +1,480 @@
+openapi: 3.0.2
+info:
+  title: Learning Pathways Admin
+  description: .
+  version: 0.0.1
+
+paths:
+  /course:
+    post:
+      summary: Creates a course.
+      tags:
+        - course
+      operationId: create
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/course'
+      responses:
+        201:
+          description: |
+            Success to create a course.
+        400:
+          description: |
+            The course is not valid.
+
+    put:
+      summary: Updates a course.
+      tags:
+        - course
+      operationId: update
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/course'
+      responses:
+        200:
+          description: Success to update a course.
+        400:
+          description: The course is not valid.
+        404:
+          description: Not found.
+
+    get:
+      summary: Gets all the course.
+      tags:
+        - course
+      operationId: getAll
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/course'
+
+  /course/{id}:
+    get:
+      summary: Gets a course.
+      tags:
+        - course
+      operationId: get
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The id of the course to get.
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/course'
+        404:
+          description: Not Found.
+
+  /course/titles:
+    get:
+      summary: Gets a list with the titles of the available courses.
+      tags:
+        - course
+      operationId: getTitles
+      responses:
+        200:
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: array
+                description: The list of courses' titles.
+                items:
+                  $ref: '#/components/schemas/course_title_id'
+
+  /test:
+    post:
+      summary: Create a new test.
+      tags:
+        - test
+      operationId: create
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/test'
+      responses:
+        201:
+          description: |
+            Success to create the test.
+        400:
+          description: |
+            The test is not valid.
+        404:
+          description: |
+            Not found.
+
+  /test/course/{course_id}:
+    get:
+      summary: Gets all the tests available for the given course.
+      tags:
+        - test
+      operationId: getAllForCourse
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The id of the course.
+      responses:
+        200:
+          description: |
+            Success to get the tests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/test'
+
+  /test/{id}:
+    get:
+      summary: Gets a test with the given id.
+      tags:
+        - test
+      operationId: get
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The id of the test to get.
+      responses:
+        200:
+          description: |
+            Success to get the test.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test'
+        400:
+          description: |
+            The test is not valid.
+        404:
+          description: |
+            Not found.
+
+  /test/results:
+    post:
+      summary: Gets the test result for a given test.
+      tags:
+        - test
+      operationId: getResults
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/test'
+      responses:
+        200:
+          description: Success to get the test results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test_result'
+        400:
+          description: Invalid test.
+        404:
+          description: No test found with the given id.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      in: header
+      name: Authorization
+
+  schemas:
+    course:
+      type: object
+      required:
+        - title
+        - nodes
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The course's id.
+          example: 1
+        title:
+          type: string
+          description: The title of the course.
+          required: true
+          minLength: 1
+          example: 'Backend Developer'
+        nodes:
+          type: array
+          description: |
+            A collection of nodes that the course contains. 
+            The nodes will be linked with the same order as this list.
+          required: true
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/course_node'
+
+    course_node:
+      type: object
+      required:
+        - title
+        - description
+        - resources
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: |
+            The node's id.
+          example: 1
+        title:
+          type: string
+          description: |
+            The title of the node.
+          required: true
+          minLength: 1
+          example: 'Spring Framework'
+        description:
+          type: string
+          description: |
+            The description.
+          required: true
+          minLength: 1
+          example: 'The Spring Framework provides a comprehensive programming...'
+        resources:
+          type: array
+          description: |
+            The resources.
+          required: true
+          items:
+            $ref: '#/components/schemas/resource'
+
+    resource:
+      type: object
+      description: resource.
+      required:
+        - title
+        - description
+        - contents
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: |
+            The id of the node.
+          example: 1
+        title:
+          type: string
+          description: |
+            The title of the node.
+          required: true
+          minLength: 1
+          example: 'The Basics of REST with Spring.'
+        description:
+          type: string
+          description: |
+            The description.
+          required: true
+          minLength: 1
+          example: 'REST embraces the precepts of the web, including its architecture...'
+        contents:
+          type: array
+          required: true
+          items:
+            $ref: '#/components/schemas/content'
+
+    content:
+      description: content.
+      type: object
+      required:
+        - title
+        - contentType
+        - url
+      properties:
+        id:
+          description: |
+            The id of the content.
+          type: integer
+          format: int64
+          example: 1
+        title:
+          description: |
+            A title for the content.
+          type: string
+          required: true
+          minLength: 1
+          example: 'Spring Official Website'
+        contentType:
+          description: |
+            The type of content.
+          type: string
+          required: true
+          enum: [VIDEO, COURSE, BOOK, WIKI, WEBSITE, TUTORIAL, OFFICIAL_WEBSITE, WATCH, READ]
+          example: OFFICIAL_WEBSITE
+        url:
+          description: |
+            The url which contains the content.
+          type: string
+          required: true
+          minLength: 1
+          example: 'https://spring.io/'
+
+    test:
+      description: a Test.
+      type: object
+      required:
+        - questions
+        - course_node_id
+      properties:
+        id:
+          description: |
+            The id of the test.
+          type: integer
+          format: int64
+          example: 1
+        course_id:
+          description: |
+            Identifies  the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+        course_node_id:
+          description: |
+            Identifies the node of the course that the test applies to.
+          type: integer
+          format: int64
+          required: true
+          example: 1
+        questions:
+          description: |
+            The questions.
+          type: array
+          required: true
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/question'
+
+    question:
+      description: The question
+      type: object
+      required:
+        - question
+        - options
+      properties:
+        id:
+          description: |
+            The id of the question.
+          type: integer
+          format: int64
+          example: 1
+        question:
+          description: | 
+            The question
+          type: string
+          required: true
+          minLength: 1
+          example: 'What is a REST API?'
+        answer:
+          description: |
+            The index of the correct answer between the options. Must be present when creating or updating a question.
+            Always null when getting a question.
+          type: integer
+          format: int32
+          example: 0
+        options:
+          description: |
+            The options that are shown as possible answers.
+          type: array
+          required: true
+          minItems: 2
+          items:
+            type: string
+            minLength: 1
+            example: 'A REST API is a...'
+    course_title_id:
+      type: object
+      properties:
+        course_id:
+          type: integer
+          format: int64
+          description: The course's id.
+          example: 1
+
+        course_title:
+          type: string
+          description: The title of the course.
+          example: 'Backend Developer'
+
+    test_result:
+      type: object
+      properties:
+        test_id:
+          type: integer
+          format: int64
+          description: The test's id.
+          example: 1
+        total_questions:
+          type: integer
+          format: int32
+          description: The total amount of question in the test.
+          example: 10
+        score:
+          type: integer
+          format: int32
+          description: The score of the test. Is always a value between 0 and 100.
+          example: 86
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/answer'
+
+    answer:
+      type: object
+      properties:
+        question:
+          description: The question.
+          type: string
+          minLength: 1
+          example: 'What is a REST API?'
+
+        given_answer:
+          description: The answer given.
+          type: string
+          minLength: 1
+          example: 'wrong answer.'
+
+        correct_answer:
+          description: The correct answer.
+          type: string
+          minLength: 1
+          example: 'correct answer.'
